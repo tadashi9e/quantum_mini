@@ -3,6 +3,8 @@ QUANTUM MINI
 
 QUANTUM MINI the quantum calculator.
 
+https://tadashi9e.github.io/quantum_mini/quantum_mini.html
+
 Requirement
 ==========
 
