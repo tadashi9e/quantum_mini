@@ -4,7 +4,17 @@
 .display {
     font-size: 20px;
 }
+.button_rst {
+    font-size: 20px;
+}
+.button_clr {
+    font-size: 20px;
+}
 .cmd {
+    background: #eeeeee;
+    font-size: 24px;
+}
+.arg {
     background: #eeeeee;
     font-size: 24px;
 }
