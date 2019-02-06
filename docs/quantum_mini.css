@@ -1,6 +1,13 @@
 .form {
     background: #ffaaaa;
 }
+.display {
+    font-size: 20px;
+}
+.cmd {
+    background: #eeeeee;
+    font-size: 24px;
+}
 .button {
     background: #ffcccc;
     font-size: 30px;
@@ -29,11 +36,11 @@
         background: #eeeeee;
         float: center;
         width: 100%;
-        height: -webkit-calc(100% -300px);
-        height: calc(100% - 300px);
+        height: -webkit-calc(100% -400px);
+        height: calc(100% - 400px);
     }
     .command {
         float: bottom;
-        height: 300px;
+        height: 400px;
     }
 }
