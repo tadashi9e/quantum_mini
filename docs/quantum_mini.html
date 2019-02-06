@@ -6,52 +6,57 @@
     <script>
       window.onload=function() { reset_cmd(); };
     </script>
+    <link rel="stylesheet" type="text/css" href="quantum_mini.css">
   </head>
   <body>
-    <form>
-      <input type="button" value="RESET" onclick="reset_cmd();">
-      <input type="button" value="CLEAR" onclick="clear_cmd();">
-      <table>
-        <tr>
-          <td><input type="text" id="cmd0" size="1" readonly="1"></td>
-          <td><input type="text" id="arg0" size="5" readonly="1"></td>
-          <td><input type="text" id="cmd1" size="1" readonly="1"></td>
-          <td><input type="text" id="arg1" size="5" readonly="1"></td>
-          <td><input type="text" id="cmd2" size="1" readonly="1"></td>
-          <td><input type="text" id="arg2" size="5" readonly="1"></td>
-      </table>
-      <textarea id="display" cols="50" rows="10" readonly="1">
-      </textarea>
-      <table>
-        <tr>
-          <td><input type="button" value="7" onclick="key_in('7');"></td>
-          <td><input type="button" value="8" onclick="key_in('8');"></td>
-          <td><input type="button" value="9" onclick="key_in('9');"></td>
-          <td><input type="button" value="H" onclick="key_in('H');"></td>
-          <td><input type="button" value="C" onclick="key_in('C');"></td>
-        </tr>
-        <tr>
-          <td><input type="button" value="4" onclick="key_in('4');"></td>
-          <td><input type="button" value="5" onclick="key_in('5');"></td>
-          <td><input type="button" value="6" onclick="key_in('6');"></td>
-          <td><input type="button" value="X" onclick="key_in('X');"></td>
-          <td><input type="button" value="R" onclick="key_in('R');"></td>
-        </tr>
-        <tr>
-          <td><input type="button" value="1" onclick="key_in('1');"></td>
-          <td><input type="button" value="2" onclick="key_in('2');"></td>
-          <td><input type="button" value="3" onclick="key_in('3');"></td>
-          <td><input type="button" value="Y" onclick="key_in('Y');"></td>
-          <td><input type="button" value="M" onclick="key_in('M');"></td>
-        </tr>
-        <tr>
-          <td><input type="button" value="0" onclick="key_in('0');"></td>
-          <td><input type="button" value="." onclick="key_in('.');"></td>
-          <td><input type="button" value="-" onclick="key_in('-');"></td>
-          <td><input type="button" value="Z" onclick="key_in('Z');"></td>
-          <td><input type="button" value="=" onclick="key_in('=');"></td>
-        </tr>
-      </table>
-    </form>
+    <div class="form">
+      <form>
+        <textarea class="display" id="display" readonly="1">
+        </textarea>
+        <div class="command">
+          <input type="button" value="RESET" onclick="reset_cmd();">
+          <input type="button" value="CLEAR" onclick="clear_cmd();">
+          <table>
+            <tr>
+              <td><input type="text" id="cmd0" size="1" readonly="1"></td>
+              <td><input type="text" id="arg0" size="5" readonly="1"></td>
+              <td><input type="text" id="cmd1" size="1" readonly="1"></td>
+              <td><input type="text" id="arg1" size="5" readonly="1"></td>
+              <td><input type="text" id="cmd2" size="1" readonly="1"></td>
+              <td><input type="text" id="arg2" size="5" readonly="1"></td>
+          </table>
+          <table>
+            <tr>
+              <td><input class="button" type="button" value="7" onclick="key_in('7');"></td>
+              <td><input class="button" type="button" value="8" onclick="key_in('8');"></td>
+              <td><input class="button" type="button" value="9" onclick="key_in('9');"></td>
+              <td><input class="button" type="button" value="H" onclick="key_in('H');"></td>
+              <td><input class="button" type="button" value="C" onclick="key_in('C');"></td>
+            </tr>
+            <tr>
+              <td><input class="button" type="button" value="4" onclick="key_in('4');"></td>
+              <td><input class="button" type="button" value="5" onclick="key_in('5');"></td>
+              <td><input class="button" type="button" value="6" onclick="key_in('6');"></td>
+              <td><input class="button" type="button" value="X" onclick="key_in('X');"></td>
+              <td><input class="button" type="button" value="R" onclick="key_in('R');"></td>
+            </tr>
+            <tr>
+              <td><input class="button" type="button" value="1" onclick="key_in('1');"></td>
+              <td><input class="button" type="button" value="2" onclick="key_in('2');"></td>
+              <td><input class="button" type="button" value="3" onclick="key_in('3');"></td>
+              <td><input class="button" type="button" value="Y" onclick="key_in('Y');"></td>
+              <td><input class="button" type="button" value="M" onclick="key_in('M');"></td>
+            </tr>
+            <tr>
+              <td><input class="button" type="button" value="0" onclick="key_in('0');"></td>
+              <td><input class="button" type="button" value="." onclick="key_in('.');"></td>
+              <td><input class="button" type="button" value="-" onclick="key_in('-');"></td>
+              <td><input class="button" type="button" value="Z" onclick="key_in('Z');"></td>
+              <td><input class="button" type="button" value="=" onclick="key_in('=');"></td>
+            </tr>
+          </table>
+        </div>
+      </form>
+    </div>
   </body>
 </html>
