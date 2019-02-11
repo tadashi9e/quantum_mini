@@ -2,15 +2,7 @@ var amps={
     0: [1.0, 0.0]
 };
 var max_bit = 0;
-function update_max_bit(a) {
-    if (a.indexOf(':') === -1) {
-        if (max_bit < a) {
-            max_bit = a;
-        }
-        return;
-    }
-    var nrs =a.split(':');
-    var n = nrs[0];
+function update_max_bit(n) {
     if (max_bit < n) {
         max_bit = n;
     }
@@ -35,21 +27,12 @@ function get_cmd2() {
 }
 function set_arg0(a) {
     document.querySelector('#arg0').value = a;
-    update_max_bit(a);
-    if (max_bit < a) {
-        max_bit = a;
-    }
 }
 function set_arg1(a) {
     document.querySelector('#arg1').value = a;
-    update_max_bit(a);
-    if (max_bit < a) {
-        max_bit = a;
-    }
 }
 function set_arg2(a) {
     document.querySelector('#arg2').value = a;
-    update_max_bit(a);
 }
 function get_arg0() {
     return document.querySelector('#arg0').value;
@@ -206,6 +189,7 @@ function m_add(m, sv, a) {
     }
 }
 function exec_h(n) {
+    update_max_bit(n);
     var amps2 = {};
     var w = Math.sqrt(0.5);
     for(sv in amps) {
@@ -221,6 +205,8 @@ function exec_h(n) {
     amps = amps2;
 }
 function exec_ch(c, n) {
+    update_max_bit(c);
+    update_max_bit(n);
     var amps2 = {};
     var w = Math.sqrt(0.5);
     for(sv in amps) {
@@ -240,6 +226,9 @@ function exec_ch(c, n) {
     amps = amps2;
 }
 function exec_cch(c1, c2, n) {
+    update_max_bit(c1);
+    update_max_bit(c2);
+    update_max_bit(n);
     var amps2 = {};
     var w = Math.sqrt(0.5);
     for(sv in amps) {
@@ -263,6 +252,7 @@ function exec_cch(c1, c2, n) {
     amps = amps2;
 }
 function exec_x(n) {
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -272,6 +262,8 @@ function exec_x(n) {
     amps = amps2;
 }
 function exec_cx(c, n) {
+    update_max_bit(c);
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -285,6 +277,9 @@ function exec_cx(c, n) {
     amps = amps2;
 }
 function exec_ccx(c1, c2, n) {
+    update_max_bit(c1);
+    update_max_bit(c2);
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -302,6 +297,7 @@ function exec_ccx(c1, c2, n) {
     amps = amps2;
 }
 function exec_y(n) {
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -314,6 +310,8 @@ function exec_y(n) {
     amps = amps2;
 }
 function exec_cy(c, n) {
+    update_max_bit(c);
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -330,6 +328,9 @@ function exec_cy(c, n) {
     amps = amps2;
 }
 function exec_ccy(c1, c2, n) {
+    update_max_bit(c1);
+    update_max_bit(c2);
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -350,6 +351,7 @@ function exec_ccy(c1, c2, n) {
     amps = amps2;
 }
 function exec_z(n) {
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -362,6 +364,8 @@ function exec_z(n) {
     amps = amps2;
 }
 function exec_cz(c, n) {
+    update_max_bit(c);
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -378,6 +382,9 @@ function exec_cz(c, n) {
     amps = amps2;
 }
 function exec_ccz(c1, c2, n) {
+    update_max_bit(c1);
+    update_max_bit(c2);
+    update_max_bit(n);
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
@@ -400,6 +407,7 @@ function exec_ccz(c1, c2, n) {
 function exec_r(n_r) {
     var nrs = n_r.split(':');
     var n = nrs[0];
+    update_max_bit(n);
     var r = nrs[1];
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
@@ -414,8 +422,10 @@ function exec_r(n_r) {
     amps = amps2;
 }
 function exec_cr(c, n_r) {
+    update_max_bit(c);
     var nrs = n_r.split(':');
     var n = nrs[0];
+    update_max_bit(n);
     var r = nrs[1];
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
@@ -434,8 +444,11 @@ function exec_cr(c, n_r) {
     amps = amps2;
 }
 function exec_ccr(c1, c2, n_r) {
+    update_max_bit(c1);
+    update_max_bit(c2);
     var nrs =n_r.split(':');
     var n = nrs[0];
+    update_max_bit(n);
     var r = nrs[1];
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
@@ -461,6 +474,7 @@ function probability(a) {
     return a[0]*a[0]+a[1]*a[1];
 }
 function exec_m(n) {
+    update_max_bit(n);
     var p0 = 0.0;
     var p1 = 0.0;
     for (sv in amps) {
