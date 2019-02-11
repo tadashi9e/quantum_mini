@@ -39,9 +39,9 @@
     }
     .command {
         float: right;
-        width: 300px;
+        width: 290px;
         height: 100%;
-        top-padding: 10px;
+        padding: 10px;
     }
 }
 @media (orientation: portrait) {
@@ -55,7 +55,7 @@
     }
     .command {
         float: bottom;
-        height: 400px;
+        height: 390px;
         padding: 10px;
     }
 }
