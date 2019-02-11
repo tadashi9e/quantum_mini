@@ -2,6 +2,19 @@ var amps={
     0: [1.0, 0.0]
 };
 var max_bit = 0;
+function update_max_bit(a) {
+    if (a.indexOf(':') === -1) {
+        if (max_bit < a) {
+            max_bit = a;
+        }
+        return;
+    }
+    var nrs =a.split(':');
+    var n = nrs[0];
+    if (max_bit < n) {
+        max_bit = n;
+    }
+}
 function set_cmd0(text) {
     document.querySelector('#cmd0').value = text;
 }
@@ -22,21 +35,21 @@ function get_cmd2() {
 }
 function set_arg0(a) {
     document.querySelector('#arg0').value = a;
+    update_max_bit(a);
     if (max_bit < a) {
         max_bit = a;
     }
 }
 function set_arg1(a) {
     document.querySelector('#arg1').value = a;
+    update_max_bit(a);
     if (max_bit < a) {
         max_bit = a;
     }
 }
 function set_arg2(a) {
     document.querySelector('#arg2').value = a;
-    if (max_bit < a) {
-        max_bit = a;
-    }
+    update_max_bit(a);
 }
 function get_arg0() {
     return document.querySelector('#arg0').value;
@@ -155,27 +168,27 @@ function set_arg_negative() {
     if (a.indexOf(':') === -1) {
         return;
     }
-    var irs =a.split(':');
-    var i = irs[0];
-    var r = -irs[1];
-    reset_arg(i+':'+r);
-    if (max_bit < i) {
-        max_bit = i;
+    var nrs =a.split(':');
+    var n = nrs[0];
+    var r = -nrs[1];
+    reset_arg(n+':'+r);
+    if (max_bit < n) {
+        max_bit = n;
     }
 }
-function is_1(sv, i) {
-    return (sv & (1 << i)) != 0 ? true : false;
+function is_1(sv, n) {
+    return (sv & (1 << n)) != 0 ? true : false;
 }
-function set_1(sv, i) {
-    return sv | (1 << i);
+function set_1(sv, n) {
+    return sv | (1 << n);
 }
-function set_0(sv, i) {
-    return sv & ~(1 << i);
+function set_0(sv, n) {
+    return sv & ~(1 << n);
 }
 function bits_of(sv) {
     var s = '';
-    for (i = 0;i <= max_bit; i++) {
-        s += is_1(sv, i) ? '1' : '0';
+    for (n = 0;n <= max_bit; n++) {
+        s += is_1(sv, n) ? '1' : '0';
     }
     return s;
 }
@@ -192,149 +205,155 @@ function m_add(m, sv, a) {
         m[sv] = a;
     }
 }
-function exec_h(i) {
+function exec_h(n) {
     var amps2 = {};
     var w = Math.sqrt(0.5);
     for(sv in amps) {
         var a = amps[sv];
-        if (is_1(sv, i)) {
-            m_add(amps2, set_0(sv, i), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, i), mult(a, [-w, 0]));
+        if (is_1(sv, n)) {
+            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(sv, n), mult(a, [-w, 0]));
         } else {
-            m_add(amps2, set_0(sv, i), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, i), mult(a, [w, 0]));
+            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(sv, n), mult(a, [w, 0]));
         }
     }
     amps = amps2;
 }
-function exec_ch(c, i) {
+function exec_ch(c, n) {
     var amps2 = {};
     var w = Math.sqrt(0.5);
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c)) {
+            m_add(amps2, sv, a);
             continue;
         }
-        var a = amps[sv];
-        if (is_1(sv, i)) {
-            m_add(amps2, set_0(sv, i), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, i), mult(a, [-w, 0]));
+        if (is_1(sv, n)) {
+            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(sv, n), mult(a, [-w, 0]));
         } else {
-            m_add(amps2, set_0(sv, i), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, i), mult(a, [w, 0]));
+            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(sv, n), mult(a, [w, 0]));
         }
     }
     amps = amps2;
 }
-function exec_cch(c1, c2, i) {
+function exec_cch(c1, c2, n) {
     var amps2 = {};
     var w = Math.sqrt(0.5);
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c1)) {
+            m_add(amps2, sv, a);
             continue;
         }
         if (!is_1(sv, c2)) {
+            m_add(amps2, sv, a);
             continue;
         }
-        var a = amps[sv];
-        if (is_1(sv, i)) {
-            m_add(amps2, set_0(sv, i), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, i), mult(a, [-w, 0]));
+        if (is_1(sv, n)) {
+            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(sv, n), mult(a, [-w, 0]));
         } else {
-            m_add(amps2, set_0(sv, i), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, i), mult(a, [w, 0]));
+            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(sv, n), mult(a, [w, 0]));
         }
     }
     amps = amps2;
 }
-function exec_x(i) {
+function exec_x(n) {
     var amps2 = {};
     for(sv in amps) {
-        var sv2 = is_1(sv, i) ?set_0(sv, i) : set_1(sv, i);
-        m_add(amps2, sv2, amps[sv]);
+        var a = amps[sv];
+        var sv2 = is_1(sv, n) ?set_0(sv, n) : set_1(sv, n);
+        m_add(amps2, sv2, a);
     }
     amps = amps2;
 }
-function exec_cx(c, i) {
+function exec_cx(c, n) {
     var amps2 = {};
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
-        var sv2 = is_1(sv, i) ?set_0(sv, i) : set_1(sv, i);
-        m_add(amps2, sv2, amps[sv]);
+        var sv2 = is_1(sv, n) ?set_0(sv, n) : set_1(sv, n);
+        m_add(amps2, sv2, a);
     }
     amps = amps2;
 }
-function exec_ccx(c1, c2, i) {
-    var amps2 = {};
-    for(sv in amps) {
-        if (!is_1(sv, c1)) {
-            m_add(amps2, sv, amps[sv]);
-            continue;
-        }
-        if (!is_1(sv, c2)) {
-            m_add(amps2, sv, amps[sv]);
-            continue;
-        }
-        var sv2 = is_1(sv, i) ?set_0(sv, i) : set_1(sv, i);
-        m_add(amps2, sv2, amps[sv]);
-    }
-    amps = amps2;
-}
-function exec_y(i) {
+function exec_ccx(c1, c2, n) {
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
-        if (is_1(sv, i)) {
-            m_add(amps2, set_0(sv, i), mult(a, [0, -1]));
+        if (!is_1(sv, c1)) {
+            m_add(amps2, sv, a);
+            continue;
+        }
+        if (!is_1(sv, c2)) {
+            m_add(amps2, sv, a);
+            continue;
+        }
+        var sv2 = is_1(sv, n) ?set_0(sv, n) : set_1(sv, n);
+        m_add(amps2, sv2, a);
+    }
+    amps = amps2;
+}
+function exec_y(n) {
+    var amps2 = {};
+    for(sv in amps) {
+        var a = amps[sv];
+        if (is_1(sv, n)) {
+            m_add(amps2, set_0(sv, n), mult(a, [0, -1]));
         } else {
-            m_add(amps2, set_1(sv, i), mult(a, [0, 1]));
+            m_add(amps2, set_1(sv, n), mult(a, [0, 1]));
         }
     }
     amps = amps2;
 }
-function exec_cy(c, i) {
+function exec_cy(c, n) {
     var amps2 = {};
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
-        var a = amps[sv];
-        if (is_1(sv, i)) {
-            m_add(amps2, set_0(sv, i), mult(a, [0, -1]));
+        if (is_1(sv, n)) {
+            m_add(amps2, set_0(sv, n), mult(a, [0, -1]));
         } else {
-            m_add(amps2, set_1(sv, i), mult(a, [0, 1]));
+            m_add(amps2, set_1(sv, n), mult(a, [0, 1]));
         }
     }
     amps = amps2;
 }
-function exec_ccy(c1, c2, i) {
+function exec_ccy(c1, c2, n) {
     var amps2 = {};
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c1)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
         if (!is_1(sv, c2)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
-        var a = amps[sv];
-        if (is_1(sv, i)) {
-            m_add(amps2, set_0(sv, i), mult(a, [0, -1]));
+        if (is_1(sv, n)) {
+            m_add(amps2, set_0(sv, n), mult(a, [0, -1]));
         } else {
-            m_add(amps2, set_1(sv, i), mult(a, [0, 1]));
+            m_add(amps2, set_1(sv, n), mult(a, [0, 1]));
         }
     }
     amps = amps2;
 }
-function exec_z(i) {
+function exec_z(n) {
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             m_add(amps2, sv, mult(a, [-1, 0]));
         } else {
             m_add(amps2, sv, a);
@@ -342,15 +361,15 @@ function exec_z(i) {
     }
     amps = amps2;
 }
-function exec_cz(c, i) {
+function exec_cz(c, n) {
     var amps2 = {};
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
-        var a = amps[sv];
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             m_add(amps2, sv, mult(a, [-1, 0]));
         } else {
             m_add(amps2, sv, a);
@@ -358,19 +377,19 @@ function exec_cz(c, i) {
     }
     amps = amps2;
 }
-function exec_ccz(c1, c2, i) {
+function exec_ccz(c1, c2, n) {
     var amps2 = {};
     for(sv in amps) {
+        var a = amps[sv];
         if (!is_1(sv, c1)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
         if (!is_1(sv, c2)) {
-            m_add(amps2, sv, amps[sv]);
+            m_add(amps2, sv, a);
             continue;
         }
-        var a = amps[sv];
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             m_add(amps2, sv, mult(a, [-1, 0]));
         } else {
             m_add(amps2, sv, a);
@@ -378,15 +397,15 @@ function exec_ccz(c1, c2, i) {
     }
     amps = amps2;
 }
-function exec_r(i_r) {
-    var irs = i_r.split(':');
-    var i = irs[0];
-    var r = irs[1];
+function exec_r(n_r) {
+    var nrs = n_r.split(':');
+    var n = nrs[0];
+    var r = nrs[1];
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             m_add(amps2, sv, mult(a, rot));
         } else {
             m_add(amps2, sv, a);
@@ -394,18 +413,19 @@ function exec_r(i_r) {
     }
     amps = amps2;
 }
-function exec_cr(c, i_r) {
-    var irs = i_r.split(':');
-    var i = irs[0];
-    var r = irs[1];
+function exec_cr(c, n_r) {
+    var nrs = n_r.split(':');
+    var n = nrs[0];
+    var r = nrs[1];
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
         if (!is_1(sv, c)) {
+            m_add(amps2, sv, a);
             continue;
         }
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             m_add(amps2, sv, mult(a, rot));
         } else {
             m_add(amps2, sv, a);
@@ -413,21 +433,23 @@ function exec_cr(c, i_r) {
     }
     amps = amps2;
 }
-function exec_ccr(c1, c2, i_r) {
-    var irs = i_r.split(':');
-    var i = irs[0];
-    var r = irs[1];
+function exec_ccr(c1, c2, n_r) {
+    var nrs =n_r.split(':');
+    var n = nrs[0];
+    var r = nrs[1];
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
     for(sv in amps) {
         var a = amps[sv];
         if (!is_1(sv, c1)) {
+            m_add(amps2, sv, a);
             continue;
         }
         if (!is_1(sv, c2)) {
+            m_add(amps2, sv, a);
             continue;
         }
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             m_add(amps2, sv, mult(a, rot));
         } else {
             m_add(amps2, sv, a);
@@ -438,11 +460,11 @@ function exec_ccr(c1, c2, i_r) {
 function probability(a) {
     return a[0]*a[0]+a[1]*a[1];
 }
-function exec_m(i) {
+function exec_m(n) {
     var p0 = 0.0;
     var p1 = 0.0;
     for (sv in amps) {
-        if (is_1(sv, i)) {
+        if (is_1(sv, n)) {
             p1 = p1 + probability(amps[sv]);
         } else {
             p0 = p0 + probability(amps[sv]);
@@ -453,7 +475,7 @@ function exec_m(i) {
     var amps2 = {};
     for (sv in amps) {
         var a = amps[sv];
-        if (is_1(sv, i) == b) {
+        if (is_1(sv, n) == b) {
             m_add(amps2, sv, [a[0] * ip, a[1] * ip]);
         }
     }

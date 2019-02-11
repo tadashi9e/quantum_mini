@@ -32,13 +32,14 @@
     .display {
         background: #eeeeee;
         float: center;
-        width: -webkit-calc(100% - 400px);
-        width : calc(100% - 400px);
+        width: -webkit-calc(100% - 300px);
+        width : calc(100% - 300px);
         height: 100%;
     }
     .command {
         float: right;
-        width: 400px;
+        width: 300px;
+        padding-top: 10px;
     }
 }
 @media (orientation: portrait) {
@@ -52,5 +53,6 @@
     .command {
         float: bottom;
         height: 400px;
+        padding: 10px;
     }
 }
