@@ -2,6 +2,7 @@ var amps={
     0: [1.0, 0.0]
 };
 var max_bit = 0;
+var commands = "";
 function update_max_bit(n) {
     if (max_bit < n) {
         max_bit = n;
@@ -47,12 +48,56 @@ var error_msg = "";
 function set_error(msg) {
     error_msg = msg + "\n";
 }
-function disp() {
-    var s = error_msg;
-    for(sv in amps) {
-        s += bits_of(sv) + ":"+ amps[sv] + "\n";
+function clear_display() {
+    var tbody = document.getElementById("display");
+    for (var i = tbody.rows.length - 1; i >= 0; i--) {
+        tbody.removeChild(tbody.rows[i]);
     }
-    document.querySelector("#display").value = s;
+}
+function strOfFloat(f) {
+    var r = f.toFixed(8);
+    if (r.match(/\./)) {
+        return r.replace(/\.?0+$/, "");
+    }
+    return r;
+}
+function disp() {
+    if (error_msg) {
+        document.querySelector("#message").value = error_msg;
+    } else {
+        document.querySelector("#message").value = commands;
+    }
+    clear_display();
+    var tbody = document.getElementById("display");
+    for(state in amps) {
+        var tr = tbody.insertRow(tbody.rows.length);
+        var amp = amps[state];
+        var real = amp ? amp[0] : 0.0;
+        var imag = amp ? amp[1] : 0.0;
+        var td_real = tr.insertCell(0);
+        td_real.appendChild(
+            document.createTextNode(strOfFloat(real)));
+        var td_imag = tr.insertCell(1);
+        var td_state = tr.insertCell(2);
+        td_state.appendChild(document.createTextNode(
+            "|" + bits_of(state) + ">"));
+        if (imag == 0.0) {
+            continue;
+        }
+        if (imag == 1.0) {
+            td_imag.appendChild(document.createTextNode("+i"));
+        } else if (imag == -1.0) {
+            td_imag.appendChild(document.createTextNode("-i"));
+        } else {
+            if (imag >= 0.0) {
+                td_imag.appendChild(
+                    document.createTextNode("+" + strOfFloat(imag) + "i"));
+            } else {
+                td_imag.appendChild(
+                    document.createTextNode(strOfFloat(imag) + "i"));
+            }
+        }
+    }
     error_msg = "";
 }
 function clear_cmd() {
@@ -66,6 +111,7 @@ function clear_cmd() {
 function reset_cmd() {
     amps = { 0:[1.0, 0.0] };
     max_bit = 0;
+    messages = "";
     clear_cmd();
     disp();
 }
@@ -159,19 +205,19 @@ function set_arg_negative() {
         max_bit = n;
     }
 }
-function is_1(sv, n) {
-    return (sv & (1 << n)) != 0 ? true : false;
+function is_1(state, n) {
+    return (state & (1 << n)) != 0 ? true : false;
 }
-function set_1(sv, n) {
-    return sv | (1 << n);
+function set_1(state, n) {
+    return state | (1 << n);
 }
-function set_0(sv, n) {
-    return sv & ~(1 << n);
+function set_0(state, n) {
+    return state & ~(1 << n);
 }
-function bits_of(sv) {
+function bits_of(state) {
     var s = "";
     for (n = 0;n <= max_bit; n++) {
-        s += is_1(sv, n) ? "1" : "0";
+        s += is_1(state, n) ? "1" : "0";
     }
     return s;
 }
@@ -181,49 +227,53 @@ function add(a, b) {
 function mult(a, b) {
     return [a[0]*b[0] -  a[1]*b[1], a[0]*b[1] +  a[1]*b[0]];
 }
-function m_add(m, sv, a) {
-    if (m[sv]) {
-        m[sv] = add(m[sv], a);
+function m_add(m, state, a) {
+    if (m[state]) {
+        m[state] = add(m[state], a);
     } else {
-        m[sv] = a;
+        m[state] = a;
     }
 }
 function exec_h(n) {
     update_max_bit(n);
     var amps2 = {};
     var w = Math.sqrt(0.5);
-    for(sv in amps) {
-        var a = amps[sv];
-        if (is_1(sv, n)) {
-            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, n), mult(a, [-w, 0]));
+    for(state in amps) {
+        var a = amps[state];
+        if (is_1(state, n)) {
+            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(state, n), mult(a, [-w, 0]));
         } else {
-            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(state, n), mult(a, [w, 0]));
         }
     }
     amps = amps2;
+    commands = commands + " H["
+        + n + "]";
 }
 function exec_ch(c, n) {
     update_max_bit(c);
     update_max_bit(n);
     var amps2 = {};
     var w = Math.sqrt(0.5);
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, n), mult(a, [-w, 0]));
+        if (is_1(state, n)) {
+            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(state, n), mult(a, [-w, 0]));
         } else {
-            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(state, n), mult(a, [w, 0]));
         }
     }
     amps = amps2;
+    commands = commands + " CH["
+        + c + "," + n + "]";
 }
 function exec_cch(c1, c2, n) {
     update_max_bit(c1);
@@ -231,244 +281,270 @@ function exec_cch(c1, c2, n) {
     update_max_bit(n);
     var amps2 = {};
     var w = Math.sqrt(0.5);
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c1)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c1)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (!is_1(sv, c2)) {
-            m_add(amps2, sv, a);
+        if (!is_1(state, c2)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, n), mult(a, [-w, 0]));
+        if (is_1(state, n)) {
+            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(state, n), mult(a, [-w, 0]));
         } else {
-            m_add(amps2, set_0(sv, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(sv, n), mult(a, [w, 0]));
+            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
+            m_add(amps2, set_1(state, n), mult(a, [w, 0]));
         }
     }
     amps = amps2;
+    commands = commands + " CCH["
+        + c1 + "," + c2 + "," + n + "]";
 }
 function exec_x(n) {
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        var sv2 = is_1(sv, n) ?set_0(sv, n) : set_1(sv, n);
-        m_add(amps2, sv2, a);
+    for(state in amps) {
+        var a = amps[state];
+        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
+        m_add(amps2, state2, a);
     }
     amps = amps2;
+    commands = commands + " X["
+        + n + "]";
 }
 function exec_cx(c, n) {
     update_max_bit(c);
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c)) {
+            m_add(amps2, state, a);
             continue;
         }
-        var sv2 = is_1(sv, n) ?set_0(sv, n) : set_1(sv, n);
-        m_add(amps2, sv2, a);
+        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
+        m_add(amps2, state2, a);
     }
     amps = amps2;
+    commands = commands + " CX["
+        + c + "," + n + "]";
 }
 function exec_ccx(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c1)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c1)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (!is_1(sv, c2)) {
-            m_add(amps2, sv, a);
+        if (!is_1(state, c2)) {
+            m_add(amps2, state, a);
             continue;
         }
-        var sv2 = is_1(sv, n) ?set_0(sv, n) : set_1(sv, n);
-        m_add(amps2, sv2, a);
+        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
+        m_add(amps2, state2, a);
     }
     amps = amps2;
+    commands = commands + " CCX["
+        + c1 + "," + c2 + "," + n + "]";
 }
 function exec_y(n) {
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (is_1(sv, n)) {
-            m_add(amps2, set_0(sv, n), mult(a, [0, -1]));
+    for(state in amps) {
+        var a = amps[state];
+        if (is_1(state, n)) {
+            m_add(amps2, set_0(state, n), mult(a, [0, -1]));
         } else {
-            m_add(amps2, set_1(sv, n), mult(a, [0, 1]));
+            m_add(amps2, set_1(state, n), mult(a, [0, 1]));
         }
     }
     amps = amps2;
+    commands = commands + " Y["
+        + n + "]";
 }
 function exec_cy(c, n) {
     update_max_bit(c);
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, set_0(sv, n), mult(a, [0, -1]));
+        if (is_1(state, n)) {
+            m_add(amps2, set_0(state, n), mult(a, [0, -1]));
         } else {
-            m_add(amps2, set_1(sv, n), mult(a, [0, 1]));
+            m_add(amps2, set_1(state, n), mult(a, [0, 1]));
         }
     }
     amps = amps2;
+    commands = commands + " CY["
+        + c + "," + n + "]";
 }
 function exec_ccy(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c1)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c1)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (!is_1(sv, c2)) {
-            m_add(amps2, sv, a);
+        if (!is_1(state, c2)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, set_0(sv, n), mult(a, [0, -1]));
+        if (is_1(state, n)) {
+            m_add(amps2, set_0(state, n), mult(a, [0, -1]));
         } else {
-            m_add(amps2, set_1(sv, n), mult(a, [0, 1]));
+            m_add(amps2, set_1(state, n), mult(a, [0, 1]));
         }
     }
     amps = amps2;
+    commands = commands + " CCY["
+        + c1 + "," + c2 + "," + n + "]";
 }
 function exec_z(n) {
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (is_1(sv, n)) {
-            m_add(amps2, sv, mult(a, [-1, 0]));
+    for(state in amps) {
+        var a = amps[state];
+        if (is_1(state, n)) {
+            m_add(amps2, state, mult(a, [-1, 0]));
         } else {
-            m_add(amps2, sv, a);
+            m_add(amps2, state, a);
         }
     }
     amps = amps2;
+    commands = commands + " Z["
+        + n + "]";
 }
 function exec_cz(c, n) {
     update_max_bit(c);
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, sv, mult(a, [-1, 0]));
+        if (is_1(state, n)) {
+            m_add(amps2, state, mult(a, [-1, 0]));
         } else {
-            m_add(amps2, sv, a);
+            m_add(amps2, state, a);
         }
     }
     amps = amps2;
+    commands = commands + " CZ["
+        +c + "," + n + "]";
 }
 function exec_ccz(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c1)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c1)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (!is_1(sv, c2)) {
-            m_add(amps2, sv, a);
+        if (!is_1(state, c2)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, sv, mult(a, [-1, 0]));
+        if (is_1(state, n)) {
+            m_add(amps2, state, mult(a, [-1, 0]));
         } else {
-            m_add(amps2, sv, a);
+            m_add(amps2, state, a);
         }
     }
     amps = amps2;
+    commands = commands + " CCZ["
+        + c1 + "," + c2 + "," + n + "]";
 }
 function exec_r(n_r) {
     var nrs = n_r.split(":");
-    var n = nrs[0];
+    var n = parseInt(nrs[0]);
     update_max_bit(n);
-    var r = nrs[1];
+    var r = parseFloat(nrs[1]);
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (is_1(sv, n)) {
-            m_add(amps2, sv, mult(a, rot));
+    for(state in amps) {
+        var a = amps[state];
+        if (is_1(state, n)) {
+            m_add(amps2, state, mult(a, rot));
         } else {
-            m_add(amps2, sv, a);
+            m_add(amps2, state, a);
         }
     }
     amps = amps2;
+    commands = commands + " R["
+        + n + "," + r + " *pi" + "]";
 }
 function exec_cr(c, n_r) {
     update_max_bit(c);
     var nrs = n_r.split(":");
-    var n = nrs[0];
+    var n = parseInt(nrs[0]);
     update_max_bit(n);
-    var r = nrs[1];
+    var r = parseFloat(nrs[1]);
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, sv, mult(a, rot));
+        if (is_1(state, n)) {
+            m_add(amps2, state, mult(a, rot));
         } else {
-            m_add(amps2, sv, a);
+            m_add(amps2, state, a);
         }
     }
     amps = amps2;
+    commands = commands + " CR["
+        + c + "," + n + "," + r + " *pi" + "]";
 }
 function exec_ccr(c1, c2, n_r) {
     update_max_bit(c1);
     update_max_bit(c2);
     var nrs =n_r.split(":");
-    var n = nrs[0];
+    var n = parseInt(nrs[0]);
     update_max_bit(n);
-    var r = nrs[1];
+    var r = parseFloat(nrs[1]);
     var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
     var amps2 = {};
-    for(sv in amps) {
-        var a = amps[sv];
-        if (!is_1(sv, c1)) {
-            m_add(amps2, sv, a);
+    for(state in amps) {
+        var a = amps[state];
+        if (!is_1(state, c1)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (!is_1(sv, c2)) {
-            m_add(amps2, sv, a);
+        if (!is_1(state, c2)) {
+            m_add(amps2, state, a);
             continue;
         }
-        if (is_1(sv, n)) {
-            m_add(amps2, sv, mult(a, rot));
+        if (is_1(state, n)) {
+            m_add(amps2, state, mult(a, rot));
         } else {
-            m_add(amps2, sv, a);
+            m_add(amps2, state, a);
         }
     }
     amps = amps2;
+    commands = commands + " CCR["
+        + c1 + "," + c2 + "," + n + "," + r + " *pi" + "]";
 }
 function probability(a) {
     return a[0]*a[0]+a[1]*a[1];
@@ -477,23 +553,25 @@ function exec_m(n) {
     update_max_bit(n);
     var p0 = 0.0;
     var p1 = 0.0;
-    for (sv in amps) {
-        if (is_1(sv, n)) {
-            p1 = p1 + probability(amps[sv]);
+    for (state in amps) {
+        if (is_1(state, n)) {
+            p1 = p1 + probability(amps[state]);
         } else {
-            p0 = p0 + probability(amps[sv]);
+            p0 = p0 + probability(amps[state]);
         }
     }
     var b = (p1 > Math.random()) ? true : false;
     var ip = 1.0 / Math.sqrt(b ? p1 : p0);
     var amps2 = {};
-    for (sv in amps) {
-        var a = amps[sv];
-        if (is_1(sv, n) == b) {
-            m_add(amps2, sv, [a[0] * ip, a[1] * ip]);
+    for (state in amps) {
+        var a = amps[state];
+        if (is_1(state, n) == b) {
+            m_add(amps2, state, [a[0] * ip, a[1] * ip]);
         }
     }
     amps = amps2;
+    commands = commands + " M["
+        + n + "]";
 }
 function exec_cmd_cc(a0, a1) {
     var c2 = get_cmd2();
@@ -504,16 +582,16 @@ function exec_cmd_cc(a0, a1) {
     }
     switch(c2) {
     case "H":
-        exec_cch(a0, a1, a2);
+        exec_cch(a0, a1, parseInt(a2));
         break;
     case "X":
-        exec_ccx(a0, a1, a2);
+        exec_ccx(a0, a1, parseInt(a2));
         break;
     case "Y":
-        exec_ccy(a0, a1, a2);
+        exec_ccy(a0, a1, parseInt(a2));
         break;
     case "Z":
-        exec_ccz(a0, a1, a2);
+        exec_ccz(a0, a1, parseInt(a2));
         break;
     case "R":
         exec_ccr(a0, a1, a2);
@@ -529,19 +607,19 @@ function exec_cmd_c(a0) {
     }
     switch(c1) {
     case "C":
-        exec_cmd_cc(a0, a1);
+        exec_cmd_cc(a0, parseInt(a1));
         break;
     case "H":
-        exec_ch(a0, a1);
+        exec_ch(a0, parseInt(a1));
         break;
     case "X":
-        exec_cx(a0, a1);
+        exec_cx(a0, parseInt(a1));
         break;
     case "Y":
-        exec_cy(a0, a1);
+        exec_cy(a0, parseInt(a1));
         break;
     case "Z":
-        exec_cz(a0, a1);
+        exec_cz(a0, parseInt(a1));
         break;
     case "R":
         exec_cr(a0, a1);
@@ -555,25 +633,25 @@ function exec_cmd() {
     var a2 = get_arg2();
     switch(c0) {
     case "C":
-        exec_cmd_c(a0);
+        exec_cmd_c(parseInt(a0));
         break;
     case "H":
-        exec_h(a0);
+        exec_h(parseInt(a0));
         break;
     case "X":
-        exec_x(a0);
+        exec_x(parseInt(a0));
         break;
     case "Y":
-        exec_y(a0);
+        exec_y(parseInt(a0));
         break;
     case "Z":
-        exec_z(a0);
+        exec_z(parseInt(a0));
         break;
     case "R":
         exec_r(a0);
         break;
     case "M":
-        exec_m(a0);
+        exec_m(parseInt(a0));
         break;
     }
     disp();

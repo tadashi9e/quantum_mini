@@ -6,6 +6,11 @@
     font-size: 20px;
     overflow: scroll;
 }
+.disp_message {
+    float: top;
+    width: 100%;
+    resize: vertical;
+}
 .button_rst {
     font-size: 20px;
 }
