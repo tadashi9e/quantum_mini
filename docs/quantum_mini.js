@@ -8,60 +8,60 @@ function update_max_bit(n) {
     }
 }
 function set_cmd0(text) {
-    document.querySelector('#cmd0').value = text;
+    document.querySelector("#cmd0").value = text;
 }
 function set_cmd1(text) {
-    document.querySelector('#cmd1').value = text;
+    document.querySelector("#cmd1").value = text;
 }
 function set_cmd2(text) {
-    document.querySelector('#cmd2').value = text;
+    document.querySelector("#cmd2").value = text;
 }
 function get_cmd0() {
-    return document.querySelector('#cmd0').value;
+    return document.querySelector("#cmd0").value;
 }
 function get_cmd1() {
-    return document.querySelector('#cmd1').value;
+    return document.querySelector("#cmd1").value;
 }
 function get_cmd2() {
-    return document.querySelector('#cmd2').value;
+    return document.querySelector("#cmd2").value;
 }
 function set_arg0(a) {
-    document.querySelector('#arg0').value = a;
+    document.querySelector("#arg0").value = a;
 }
 function set_arg1(a) {
-    document.querySelector('#arg1').value = a;
+    document.querySelector("#arg1").value = a;
 }
 function set_arg2(a) {
-    document.querySelector('#arg2').value = a;
+    document.querySelector("#arg2").value = a;
 }
 function get_arg0() {
-    return document.querySelector('#arg0').value;
+    return document.querySelector("#arg0").value;
 }
 function get_arg1() {
-    return document.querySelector('#arg1').value;
+    return document.querySelector("#arg1").value;
 }
 function get_arg2(text) {
-    return document.querySelector('#arg2').value;
+    return document.querySelector("#arg2").value;
 }
-var error_msg = '';
+var error_msg = "";
 function set_error(msg) {
-    error_msg = msg + '\n';
+    error_msg = msg + "\n";
 }
 function disp() {
     var s = error_msg;
     for(sv in amps) {
-        s += bits_of(sv) + ':'+ amps[sv] + '\n';
+        s += bits_of(sv) + ":"+ amps[sv] + "\n";
     }
-    document.querySelector('#display').value = s;
-    error_msg = '';
+    document.querySelector("#display").value = s;
+    error_msg = "";
 }
 function clear_cmd() {
-    set_cmd0('');
-    set_cmd1('');
-    set_cmd2('');
-    set_arg0('');
-    set_arg1('');
-    set_arg2('');
+    set_cmd0("");
+    set_cmd1("");
+    set_cmd2("");
+    set_arg0("");
+    set_arg1("");
+    set_arg2("");
 }
 function reset_cmd() {
     amps = { 0:[1.0, 0.0] };
@@ -70,20 +70,20 @@ function reset_cmd() {
     disp();
 }
 function set_cmd(c) {
-    if (get_cmd0() === '') {
+    if (get_cmd0() === "") {
         set_cmd0(c);
         return;
     }
-    if (get_arg0() === '') {
+    if (get_arg0() === "") {
         return;
     }
-     if (get_cmd1() === '') {
+     if (get_cmd1() === "") {
         set_cmd1(c);
     }
-    if (get_arg1() === '') {
+    if (get_arg1() === "") {
         return;
     }
-    if (get_cmd2() === '') {
+    if (get_cmd2() === "") {
         set_cmd2(c);
     }
 }
@@ -100,7 +100,7 @@ function get_cmd() {
     if (c) {
         return c;
     }
-    return '';
+    return "";
 }
 function get_arg() {
     var a = get_arg2();
@@ -133,28 +133,28 @@ function reset_arg(a) {
 }
 function set_arg_dot() {
     var c = get_cmd();
-    if (c != 'R') {
+    if (c != "R") {
         return;
     }
     var a = get_arg();
-    if (a.indexOf(':') === -1) {
+    if (a.indexOf(":") === -1) {
         return;
     }
-    set_arg('.');
+    set_arg(".");
 }
 function set_arg_negative() {
     var c = get_cmd();
-    if (c != 'R') {
+    if (c != "R") {
         return;
     }
     var a = get_arg();
-    if (a.indexOf(':') === -1) {
+    if (a.indexOf(":") === -1) {
         return;
     }
-    var nrs =a.split(':');
+    var nrs =a.split(":");
     var n = nrs[0];
     var r = -nrs[1];
-    reset_arg(n+':'+r);
+    reset_arg(n+":"+r);
     if (max_bit < n) {
         max_bit = n;
     }
@@ -169,9 +169,9 @@ function set_0(sv, n) {
     return sv & ~(1 << n);
 }
 function bits_of(sv) {
-    var s = '';
+    var s = "";
     for (n = 0;n <= max_bit; n++) {
-        s += is_1(sv, n) ? '1' : '0';
+        s += is_1(sv, n) ? "1" : "0";
     }
     return s;
 }
@@ -405,7 +405,7 @@ function exec_ccz(c1, c2, n) {
     amps = amps2;
 }
 function exec_r(n_r) {
-    var nrs = n_r.split(':');
+    var nrs = n_r.split(":");
     var n = nrs[0];
     update_max_bit(n);
     var r = nrs[1];
@@ -423,7 +423,7 @@ function exec_r(n_r) {
 }
 function exec_cr(c, n_r) {
     update_max_bit(c);
-    var nrs = n_r.split(':');
+    var nrs = n_r.split(":");
     var n = nrs[0];
     update_max_bit(n);
     var r = nrs[1];
@@ -446,7 +446,7 @@ function exec_cr(c, n_r) {
 function exec_ccr(c1, c2, n_r) {
     update_max_bit(c1);
     update_max_bit(c2);
-    var nrs =n_r.split(':');
+    var nrs =n_r.split(":");
     var n = nrs[0];
     update_max_bit(n);
     var r = nrs[1];
@@ -499,23 +499,23 @@ function exec_cmd_cc(a0, a1) {
     var c2 = get_cmd2();
     var a2 = get_arg2();
     if (a0 == a2 || a1 == a2) {
-        set_error('invalid argument');
+        set_error("invalid argument");
         return;
     }
     switch(c2) {
-    case 'H':
+    case "H":
         exec_cch(a0, a1, a2);
         break;
-    case 'X':
+    case "X":
         exec_ccx(a0, a1, a2);
         break;
-    case 'Y':
+    case "Y":
         exec_ccy(a0, a1, a2);
         break;
-    case 'Z':
+    case "Z":
         exec_ccz(a0, a1, a2);
         break;
-    case 'R':
+    case "R":
         exec_ccr(a0, a1, a2);
         break;
     }
@@ -524,26 +524,26 @@ function exec_cmd_c(a0) {
     var c1 = get_cmd1();
     var a1 = get_arg1();
     if (a0 == a1) {
-        set_error('invalid argument');
+        set_error("invalid argument");
         return;
     }
     switch(c1) {
-    case 'C':
+    case "C":
         exec_cmd_cc(a0, a1);
         break;
-    case 'H':
+    case "H":
         exec_ch(a0, a1);
         break;
-    case 'X':
+    case "X":
         exec_cx(a0, a1);
         break;
-    case 'Y':
+    case "Y":
         exec_cy(a0, a1);
         break;
-    case 'Z':
+    case "Z":
         exec_cz(a0, a1);
         break;
-    case 'R':
+    case "R":
         exec_cr(a0, a1);
         break;
     }
@@ -554,25 +554,25 @@ function exec_cmd() {
     var c2 = get_cmd2();
     var a2 = get_arg2();
     switch(c0) {
-    case 'C':
+    case "C":
         exec_cmd_c(a0);
         break;
-    case 'H':
+    case "H":
         exec_h(a0);
         break;
-    case 'X':
+    case "X":
         exec_x(a0);
         break;
-    case 'Y':
+    case "Y":
         exec_y(a0);
         break;
-    case 'Z':
+    case "Z":
         exec_z(a0);
         break;
-    case 'R':
+    case "R":
         exec_r(a0);
         break;
-    case 'M':
+    case "M":
         exec_m(a0);
         break;
     }
@@ -580,13 +580,13 @@ function exec_cmd() {
 }
 function key_in(c) {
     switch(c) {
-    case 'C':
-    case 'H':
-    case 'X':
-    case 'Y':
-    case 'R':
+    case "C":
+    case "H":
+    case "X":
+    case "Y":
+    case "R":
         var c0 = get_cmd();
-        if (c0 === '' || c0 === 'C') {
+        if (c0 === "" || c0 === "C") {
             set_cmd(c);
         } else {
             exec_cmd();
@@ -594,14 +594,14 @@ function key_in(c) {
             set_cmd(c);
         }
         break;
-    case 'Z':
+    case "Z":
         var c0 = get_cmd();
-        if (c0 === '' || c0 === 'C') {
+        if (c0 === "" || c0 === "C") {
             set_cmd(c);
-        } else if (c0 === 'R') {
+        } else if (c0 === "R") {
             var a = get_arg();
             if (a) {
-                set_arg(':');
+                set_arg(":");
             }
         } else {
             exec_cmd();
@@ -609,36 +609,36 @@ function key_in(c) {
             set_cmd(c);
         }
         break;
-    case 'M':
+    case "M":
         var c1 = get_cmd();
-        if (c1 === '') {
+        if (c1 === "") {
             set_cmd(c);
-        } else if (c1 != 'C') {
+        } else if (c1 != "C") {
             exec_cmd();
             clear_cmd();
             set_cmd(c);
         }
         break;
-    case '=':
+    case "=":
         exec_cmd();
         clear_cmd();
         break;
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
+    case "0":
+    case "1":
+    case "2":
+    case "3":
+    case "4":
+    case "5":
+    case "6":
+    case "7":
+    case "8":
+    case "9":
         set_arg(c);
         break;
-    case '.':
+    case ".":
         set_arg_dot();
         break;
-    case '-':
+    case "-":
         set_arg_negative();
         break;
     }
