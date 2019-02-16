@@ -74,28 +74,32 @@ function disp() {
         var amp = amps[state];
         var real = amp ? amp[0] : 0.0;
         var imag = amp ? amp[1] : 0.0;
-        var td_real = tr.insertCell(0);
+        var td_real_sign = tr.insertCell(0);
+        if (real < 0.0) {
+            td_real_sign.appendChild(
+                document.createTextNode("-"));
+        }
+        var td_real = tr.insertCell(1);
         td_real.appendChild(
-            document.createTextNode(strOfFloat(real)));
-        var td_imag = tr.insertCell(1);
-        var td_state = tr.insertCell(2);
+            document.createTextNode(strOfFloat(real < 0.0 ? -real : real)));
+        var td_imag_sign = tr.insertCell(2);
+        var td_imag = tr.insertCell(3);
+        var td_state = tr.insertCell(4);
         td_state.appendChild(document.createTextNode(
             "|" + bits_of(state) + ">"));
         if (imag == 0.0) {
             continue;
         }
+        td_imag_sign.appendChild(document.createTextNode(
+            imag < 0.0 ? "-" : "+"));
         if (imag == 1.0) {
-            td_imag.appendChild(document.createTextNode("+i"));
+            td_imag.appendChild(document.createTextNode("i"));
         } else if (imag == -1.0) {
-            td_imag.appendChild(document.createTextNode("-i"));
+            td_imag.appendChild(document.createTextNode("i"));
         } else {
-            if (imag >= 0.0) {
-                td_imag.appendChild(
-                    document.createTextNode("+" + strOfFloat(imag) + "i"));
-            } else {
-                td_imag.appendChild(
-                    document.createTextNode(strOfFloat(imag) + "i"));
-            }
+            td_imag.appendChild(
+                document.createTextNode(strOfFloat(
+                    imag < 0.0 ? -imag : imag) + "i"));
         }
     }
     error_msg = "";
@@ -229,8 +233,16 @@ function mult(a, b) {
     return [a[0]*b[0] -  a[1]*b[1], a[0]*b[1] +  a[1]*b[0]];
 }
 function m_add(m, state, a) {
+    if (a[0] == 0.0 && a[1] == 0.0) {
+        return;
+    }
     if (m[state]) {
-        m[state] = add(m[state], a);
+        var a2 = add(m[state], a);
+        if (a2[0] == 0.0 && a2[1] == 0.0) {
+            delete m[state];
+            return;
+        }
+        m[state] = a2;
     } else {
         m[state] = a;
     }
