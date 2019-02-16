@@ -576,8 +576,9 @@ function exec_m(n) {
 function exec_cmd_cc(a0, a1) {
     var c2 = get_cmd2();
     var a2 = get_arg2();
-    if (a0 == a2 || a1 == a2) {
+    if (a0 == a2 || a1 == a2 || a2 === "") {
         set_error("invalid argument");
+        disp();
         return;
     }
     switch(c2) {
@@ -601,8 +602,9 @@ function exec_cmd_cc(a0, a1) {
 function exec_cmd_c(a0) {
     var c1 = get_cmd1();
     var a1 = get_arg1();
-    if (a0 == a1) {
+    if (a0 == a1 || a1 === "") {
         set_error("invalid argument");
+        disp();
         return;
     }
     switch(c1) {
@@ -629,8 +631,11 @@ function exec_cmd_c(a0) {
 function exec_cmd() {
     var c0 = get_cmd0();
     var a0 = get_arg0();
-    var c2 = get_cmd2();
-    var a2 = get_arg2();
+    if (a0 === "") {
+        set_error("invalid argument");
+        disp();
+        return;
+    }
     switch(c0) {
     case "C":
         exec_cmd_c(parseInt(a0));
