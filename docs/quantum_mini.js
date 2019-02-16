@@ -112,6 +112,7 @@ function reset_cmd() {
     amps = { 0:[1.0, 0.0] };
     max_bit = 0;
     messages = "";
+    commands = "";
     clear_cmd();
     disp();
 }
