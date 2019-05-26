@@ -1,12 +1,291 @@
-var amps={
-    0: [1.0, 0.0]
-};
-var max_bit = 0;
-var commands = "";
-function update_max_bit(n) {
-    if (max_bit < n) {
-        max_bit = n;
+function is_1(state, n) {
+    return (state & (1 << n)) != 0 ? true : false;
+}
+function set_1(state, n) {
+    return state | (1 << n);
+}
+function set_0(state, n) {
+    return state & ~(1 << n);
+}
+function bits_of(state) {
+    var s = "";
+    for (var n = 0;n <= max_bit; n++) {
+        s += is_1(state, n) ? "1" : "0";
     }
+    return s;
+}
+function add(a, b) {
+    return [a[0]+b[0], a[1]+b[1]];
+}
+function mult(a, b) {
+    return [a[0]*b[0] -  a[1]*b[1], a[0]*b[1] +  a[1]*b[0]];
+}
+function m_add(m, state, a) {
+    if (!a || (a[0] == 0.0 && a[1] == 0.0)) {
+        return;
+    }
+    if (m[state]) {
+        var a2 = add(m[state], a);
+        if (a2[0] == 0.0 && a2[1] == 0.0) {
+            delete m[state];
+            return;
+        }
+        m[state] = add(m[state], a);
+    } else {
+        m[state] = a;
+    }
+}
+function op_h(avs2, avs, n) {
+    var w = Math.sqrt(0.5);
+    for (var state in avs) {
+        var a = avs[state];
+        if (is_1(state, n)) {
+            m_add(avs2, set_0(state, n), mult(a, [w, 0.0]));
+            m_add(avs2, set_1(state, n), mult(a, [-w, 0.0]));
+        } else {
+            m_add(avs2, set_0(state, n), mult(a, [w, 0.0]));
+            m_add(avs2, set_1(state, n), mult(a, [w, 0.0]));
+        }
+    }
+}
+function op_ch(avs2, avs, c, n) {
+    var w = Math.sqrt(0.5);
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (is_1(state, n)) {
+            m_add(avs2, set_0(state, n), mult(a, [w, 0.0]));
+            m_add(avs2, set_1(state, n), mult(a, [-w, 0.0]));
+        } else {
+            m_add(avs2, set_0(state, n), mult(a, [w, 0.0]));
+            m_add(avs2, set_1(state, n), mult(a, [w, 0.0]));
+        }
+    }
+}
+function op_cch(avs2, avs, c1, c2, n) {
+    var w = Math.sqrt(0.5);
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c1)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (!is_1(state, c2)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (is_1(state, n)) {
+            m_add(avs2, set_0(state, n), mult(a, [w, 0.0]));
+            m_add(avs2, set_1(state, n), mult(a, [-w, 0.0]));
+        } else {
+            m_add(avs2, set_0(state, n), mult(a, [w, 0.0]));
+            m_add(avs2, set_1(state, n), mult(a, [w, 0.0]));
+        }
+    }
+}
+function op_x(avs2, avs, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
+        m_add(avs2, state2, a);
+    }
+}
+function op_cx(avs2, avs, c, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
+        m_add(avs2, state2, a);
+    }
+}
+function op_ccx(avs2, avs, c1, c2, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c1)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (!is_1(state, c2)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
+        m_add(avs2, state2, a);
+    }
+}
+function op_y(avs2, avs, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (is_1(state, n)) {
+            m_add(avs2, set_0(state, n), mult(a, [0.0, -1.0]));
+        } else {
+            m_add(avs2, set_1(state, n), mult(a, [0.0, 1.0]));
+        }
+    }
+}
+function op_cy(avs2, avs, c, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (is_1(state, n)) {
+            m_add(avs2, set_0(state, n), mult(a, [0.0, -1.0]));
+        } else {
+            m_add(avs2, set_1(state, n), mult(a, [0.0, 1.0]));
+        }
+    }
+}
+function op_ccy(avs2, avs, c1, c2, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c1)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (!is_1(state, c2)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (is_1(state, n)) {
+            m_add(avs2, set_0(state, n), mult(a, [0.0, -1.0]));
+        } else {
+            m_add(avs2, set_1(state, n), mult(a, [0.0, 1.0]));
+        }
+    }
+}
+function op_z(avs2, avs, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (is_1(state, n)) {
+            m_add(avs2, state, mult(a, [-1.0, 0.0]));
+        } else {
+            m_add(avs2, state, a);
+        }
+    }
+}
+function op_cz(avs2, avs, c, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (is_1(state, n)) {
+            m_add(avs2, state, mult(a, [-1.0, 0.0]));
+        } else {
+            m_add(avs2, state, a);
+        }
+    }
+}
+function op_ccz(avs2, avs, c1, c2, n) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c1)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (!is_1(state, c2)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (is_1(state, n)) {
+            m_add(avs2, state, mult(a, [-1.0, 0.0]));
+        } else {
+            m_add(avs2, state, a);
+        }
+    }
+}
+function rot_x(avs2, state, a, n, r) {
+    var rot00 = [Math.cos(0.5 * r * Math.PI), 0.0];
+    var rot01 = [0.0, -Math.sin(0.5 * r * Math.PI)];
+    var rot10 = rot01;
+    var rot11 = rot00;
+    if (is_1(state, n)) {
+        m_add(avs2, set_0(state, n), mult(a, rot10));
+        m_add(avs2, set_1(state, n), mult(a, rot11));
+    } else {
+        m_add(avs2, set_0(state, n), mult(a, rot00));
+        m_add(avs2, set_1(state, n), mult(a, rot01));
+    }
+}
+function rot_y(avs2, state, a, n, r) {
+    var rot00 = [Math.cos(0.5 * r * Math.PI), 0.0];
+    var rot01 = [Math.sin(0.5 * r * Math.PI), 0.0];
+    var rot10 = [-Math.sin(0.5 * r * Math.PI), 0.0];
+    var rot11 = rot00;
+    if (is_1(state, n)) {
+        m_add(avs2, set_0(state, n), mult(a, rot10));
+        m_add(avs2, set_1(state, n), mult(a, rot11));
+    } else {
+        m_add(avs2, set_0(state, n), mult(a, rot00));
+        m_add(avs2, set_1(state, n), mult(a, rot01));
+    }
+}
+function rot_z(avs2, state, a, n, r) {
+    var rot00 = [Math.cos(0.5 * r * Math.PI), -Math.sin(0.5 * r * Math.PI)];
+    var rot11 = [Math.cos(0.5 * r * Math.PI), Math.sin(0.5 * r * Math.PI)];
+    if (is_1(state, n)) {
+        m_add(avs2, set_1(state, n), mult(a, rot11));
+    } else {
+        m_add(avs2, set_0(state, n), mult(a, rot00));
+    }
+}
+function rot(avs2, state, a, n, d, r) {
+    if (d == "X") {
+        rot_x(avs2, state, a, n, r);
+    }
+    if (d == "Y") {
+        rot_y(avs2, state, a, n, r);
+    }
+    if (d == "Z") {
+        rot_z(avs2, state, a, n, r);
+    }
+}
+function op_r(avs2, avs, n,  d, r) {
+    for (var state in avs) {
+        var a = avs[state];
+        rot(avs2, state, a, n, d, r);
+    }
+}
+function op_cr(avs2, avs, c, n, d, r) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        rot(avs2, state, a, n, d, r);
+    }
+}
+function op_ccr(avs2, avs, c1, c2, n, d, r) {
+    for (var state in avs) {
+        var a = avs[state];
+        if (!is_1(state, c1)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        if (!is_1(state, c2)) {
+            m_add(avs2, state, a);
+            continue;
+        }
+        rot(avs2, state, a, n, d, r);
+    }
+}
+// ----------------------------------------------------------------------
+function strOfFloat(f) {
+    var r = String(Math.floor(f * 100000000) / 100000000);
+    if (r.match(/\./)) {
+        return r.replace(/\.?0+$/, "");
+    }
+    return r;
 }
 function set_cmd0(text) {
     document.querySelector("#cmd0").value = text;
@@ -43,82 +322,6 @@ function get_arg1() {
 }
 function get_arg2(text) {
     return document.querySelector("#arg2").value;
-}
-var error_msg = "";
-function set_error(msg) {
-    error_msg = msg + "\n";
-}
-function clear_display() {
-    var tbody = document.getElementById("display");
-    for (var i = tbody.rows.length - 1; i >= 0; i--) {
-        tbody.removeChild(tbody.rows[i]);
-    }
-}
-function strOfFloat(f) {
-    var r = f.toFixed(8);
-    if (r.match(/\./)) {
-        return r.replace(/\.?0+$/, "");
-    }
-    return r;
-}
-function disp() {
-    if (error_msg) {
-        document.querySelector("#message").value = error_msg;
-    } else {
-        document.querySelector("#message").value = commands;
-    }
-    clear_display();
-    var tbody = document.getElementById("display");
-    for(state in amps) {
-        var tr = tbody.insertRow(tbody.rows.length);
-        var amp = amps[state];
-        var real = amp ? amp[0] : 0.0;
-        var imag = amp ? amp[1] : 0.0;
-        var td_real_sign = tr.insertCell(0);
-        if (real < 0.0) {
-            td_real_sign.appendChild(
-                document.createTextNode("-"));
-        }
-        var td_real = tr.insertCell(1);
-        td_real.appendChild(
-            document.createTextNode(strOfFloat(real < 0.0 ? -real : real)));
-        var td_imag_sign = tr.insertCell(2);
-        var td_imag = tr.insertCell(3);
-        var td_state = tr.insertCell(4);
-        td_state.appendChild(document.createTextNode(
-            "|" + bits_of(state) + ">"));
-        if (imag == 0.0) {
-            continue;
-        }
-        td_imag_sign.appendChild(document.createTextNode(
-            imag < 0.0 ? "-" : "+"));
-        if (imag == 1.0) {
-            td_imag.appendChild(document.createTextNode("i"));
-        } else if (imag == -1.0) {
-            td_imag.appendChild(document.createTextNode("i"));
-        } else {
-            td_imag.appendChild(
-                document.createTextNode(strOfFloat(
-                    imag < 0.0 ? -imag : imag) + "i"));
-        }
-    }
-    error_msg = "";
-}
-function clear_cmd() {
-    set_cmd0("");
-    set_cmd1("");
-    set_cmd2("");
-    set_arg0("");
-    set_arg1("");
-    set_arg2("");
-}
-function reset_cmd() {
-    amps = { 0:[1.0, 0.0] };
-    max_bit = 0;
-    messages = "";
-    commands = "";
-    clear_cmd();
-    disp();
 }
 function set_cmd(c) {
     if (get_cmd0() === "") {
@@ -164,7 +367,7 @@ function get_arg() {
     }
     return get_arg0();
 }
-function set_arg(c) {
+function extend_arg(c) {
     if (get_cmd2()) {
         set_arg2(get_arg2() + c);
     } else if (get_cmd1()) {
@@ -182,16 +385,83 @@ function reset_arg(a) {
         set_arg0(a);
     }
 }
+function get_rot_direction(a) {
+    if (a.indexOf("X") !== -1) {
+        return "X";
+    }
+    if (a.indexOf("Y") !== -1) {
+        return "Y";
+    }
+    if (a.indexOf("Z") !== -1) {
+        return "Z";
+    }
+    return "";
+}
+function set_rot_direction(a, d) {
+    var i = a.indexOf("X");
+    if (i !== -1) {
+        return a.substr(0, i) + d + a.substr(i + 1);
+    }
+    i = a.indexOf("Y");
+    if (i !== -1) {
+        return a.substr(0, i) + d + a.substr(i + 1);
+    }
+    i = a.indexOf("Z");
+    if (i !== -1) {
+        return a.substr(0, i) + d + a.substr(i + 1);
+    }
+    return a + d;
+}
+function get_rot_index(a) {
+    var i;
+    i = a.indexOf("X");
+    if (i !== -1) {
+        return i;
+    }
+    i = a.indexOf("Y");
+    if (i !== -1) {
+        return i;
+    }
+    i = a.indexOf("Z");
+    if (i !== -1) {
+        return i;
+    }
+    return -1;
+}
+function get_rot_target(a) {
+    var i = get_rot_index(a);
+    if (i === -1) {
+        return -1;
+    }
+    return parseInt(a.substring(0, i));
+}
+function get_rot_angle_raw(a) {
+    var i = get_rot_index(a);
+    if (i === -1) {
+        return "";
+    }
+    return a.substring(i + 1);
+}
+function get_rot_angle(a) {
+    var s = get_rot_angle_raw(a);
+    if (s === "") {
+        return 0.0;
+    }
+    return parseFloat(s);
+}
+function reset_rot(target, direction, angle) {
+    reset_arg(String(target) + direction + String(angle));
+}
 function set_arg_dot() {
     var c = get_cmd();
     if (c != "R") {
         return;
     }
     var a = get_arg();
-    if (a.indexOf(":") === -1) {
+    if (get_rot_direction(a) === "") {
         return;
     }
-    set_arg(".");
+    extend_arg(".");
 }
 function set_arg_negative() {
     var c = get_cmd();
@@ -199,92 +469,110 @@ function set_arg_negative() {
         return;
     }
     var a = get_arg();
-    if (a.indexOf(":") === -1) {
-        return;
+    var d = get_rot_direction(a);
+    var n = get_rot_target(a);
+    var r = get_rot_angle_raw(a);
+    if (r.match(/-/)) {
+        r = r.replace(/-/, "");
+    } else {
+        r = "-" + r;
     }
-    var nrs =a.split(":");
-    var n = nrs[0];
-    var r = -nrs[1];
-    reset_arg(n+":"+r);
+    reset_rot(n, d, r);
+    update_max_bit(n);
+}
+function clear_cmd() {
+    set_cmd0("");
+    set_cmd1("");
+    set_cmd2("");
+    set_arg0("");
+    set_arg1("");
+    set_arg2("");
+}
+var error_msg = "";
+function set_error(msg) {
+    error_msg = msg + "\n";
+}
+var max_bit = 0;
+var commands = "";
+var avs = {
+    "0": [1.0, 0.0]
+};
+function update_max_bit(n) {
     if (max_bit < n) {
         max_bit = n;
     }
 }
-function is_1(state, n) {
-    return (state & (1 << n)) != 0 ? true : false;
-}
-function set_1(state, n) {
-    return state | (1 << n);
-}
-function set_0(state, n) {
-    return state & ~(1 << n);
-}
-function bits_of(state) {
-    var s = "";
-    for (n = 0;n <= max_bit; n++) {
-        s += is_1(state, n) ? "1" : "0";
+function clear_display() {
+    var tbody = document.getElementById("display");
+    for (var i = tbody.rows.length - 1; i >= 0; i--) {
+        tbody.removeChild(tbody.rows[i]);
     }
-    return s;
 }
-function add(a, b) {
-    return [a[0]+b[0], a[1]+b[1]];
-}
-function mult(a, b) {
-    return [a[0]*b[0] -  a[1]*b[1], a[0]*b[1] +  a[1]*b[0]];
-}
-function m_add(m, state, a) {
-    if (a[0] == 0.0 && a[1] == 0.0) {
-        return;
-    }
-    if (m[state]) {
-        var a2 = add(m[state], a);
-        if (a2[0] == 0.0 && a2[1] == 0.0) {
-            delete m[state];
-            return;
-        }
-        m[state] = a2;
+function disp() {
+    if (error_msg) {
+        document.querySelector("#message").value = error_msg;
     } else {
-        m[state] = a;
+        document.querySelector("#message").value = commands;
     }
+    clear_display();
+    var tbody = document.getElementById("display");
+    for (var state in avs) {
+        var tr = tbody.insertRow(tbody.rows.length);
+        var av = avs[state];
+        var real = av ? av[0] : 0.0;
+        var imag = av ? av[1] : 0.0;
+        var td_real_sign = tr.insertCell(0);
+        if (real < 0.0) {
+            td_real_sign.appendChild(
+                document.createTextNode("-"));
+        }
+        var td_real = tr.insertCell(1);
+        td_real.appendChild(
+            document.createTextNode(strOfFloat(real < 0.0 ? -real : real)));
+        var td_imag_sign = tr.insertCell(2);
+        var td_imag = tr.insertCell(3);
+        var td_state = tr.insertCell(4);
+        td_state.appendChild(document.createTextNode(
+            "|" + bits_of(state) + ">"));
+        if (imag == 0.0) {
+            continue;
+        }
+        td_imag_sign.appendChild(document.createTextNode(
+            imag < 0.0 ? "-" : "+"));
+        if (imag == 1.0) {
+            td_imag.appendChild(document.createTextNode("i"));
+        } else if (imag == -1.0) {
+            td_imag.appendChild(document.createTextNode("i"));
+        } else {
+            td_imag.appendChild(
+                document.createTextNode(strOfFloat(
+                    imag < 0.0 ? -imag : imag) + "i"));
+        }
+    }
+    error_msg = "";
+}
+function reset_cmd() {
+    avs = { "0":[1.0, 0.0] };
+    max_bit = 0;
+    messages = "";
+    commands = "";
+    clear_cmd();
+    disp();
 }
 function exec_h(n) {
     update_max_bit(n);
-    var amps2 = {};
-    var w = Math.sqrt(0.5);
-    for(state in amps) {
-        var a = amps[state];
-        if (is_1(state, n)) {
-            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(state, n), mult(a, [-w, 0]));
-        } else {
-            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(state, n), mult(a, [w, 0]));
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_h(avs2, avs, n);
+    avs = avs2;
     commands = commands + " H["
         + n + "]";
 }
 function exec_ch(c, n) {
     update_max_bit(c);
     update_max_bit(n);
-    var amps2 = {};
-    var w = Math.sqrt(0.5);
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(state, n), mult(a, [-w, 0]));
-        } else {
-            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(state, n), mult(a, [w, 0]));
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_ch(avs2, avs, c, n);
+    avs = avs2;
     commands = commands + " CH["
         + c + "," + n + "]";
 }
@@ -292,56 +580,26 @@ function exec_cch(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
-    var amps2 = {};
-    var w = Math.sqrt(0.5);
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c1)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (!is_1(state, c2)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(state, n), mult(a, [-w, 0]));
-        } else {
-            m_add(amps2, set_0(state, n), mult(a, [w, 0]));
-            m_add(amps2, set_1(state, n), mult(a, [w, 0]));
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_cch(avs2, avs, c1, c2, n);
+    avs = avs2;
     commands = commands + " CCH["
         + c1 + "," + c2 + "," + n + "]";
 }
 function exec_x(n) {
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
-        m_add(amps2, state2, a);
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_x(avs2, avs, n);
+    avs = avs2;
     commands = commands + " X["
         + n + "]";
 }
 function exec_cx(c, n) {
     update_max_bit(c);
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
-        m_add(amps2, state2, a);
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_cx(avs2, avs, c, n);
+    avs = avs2;
     commands = commands + " CX["
         + c + "," + n + "]";
 }
@@ -349,56 +607,26 @@ function exec_ccx(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c1)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (!is_1(state, c2)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        var state2 = is_1(state, n) ?set_0(state, n) : set_1(state, n);
-        m_add(amps2, state2, a);
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_ccx(avs2, avs, c1, c2, n);
+    avs = avs2;
     commands = commands + " CCX["
         + c1 + "," + c2 + "," + n + "]";
 }
 function exec_y(n) {
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (is_1(state, n)) {
-            m_add(amps2, set_0(state, n), mult(a, [0, -1]));
-        } else {
-            m_add(amps2, set_1(state, n), mult(a, [0, 1]));
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_y(avs2, avs, n);
+    avs = avs2;
     commands = commands + " Y["
         + n + "]";
 }
 function exec_cy(c, n) {
     update_max_bit(c);
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, set_0(state, n), mult(a, [0, -1]));
-        } else {
-            m_add(amps2, set_1(state, n), mult(a, [0, 1]));
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_cy(avs2, avs, c, n);
+    avs = avs2;
     commands = commands + " CY["
         + c + "," + n + "]";
 }
@@ -406,59 +634,26 @@ function exec_ccy(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c1)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (!is_1(state, c2)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, set_0(state, n), mult(a, [0, -1]));
-        } else {
-            m_add(amps2, set_1(state, n), mult(a, [0, 1]));
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_ccy(avs2, avs, c1, c2, n);
+    avs = avs2;
     commands = commands + " CCY["
         + c1 + "," + c2 + "," + n + "]";
 }
 function exec_z(n) {
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (is_1(state, n)) {
-            m_add(amps2, state, mult(a, [-1, 0]));
-        } else {
-            m_add(amps2, state, a);
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_z(avs2, avs, n);
+    avs = avs2;
     commands = commands + " Z["
         + n + "]";
 }
 function exec_cz(c, n) {
     update_max_bit(c);
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, state, mult(a, [-1, 0]));
-        } else {
-            m_add(amps2, state, a);
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_cz(avs2, avs, c, n);
+    avs = avs2;
     commands = commands + " CZ["
         +c + "," + n + "]";
 }
@@ -466,97 +661,46 @@ function exec_ccz(c1, c2, n) {
     update_max_bit(c1);
     update_max_bit(c2);
     update_max_bit(n);
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c1)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (!is_1(state, c2)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, state, mult(a, [-1, 0]));
-        } else {
-            m_add(amps2, state, a);
-        }
-    }
-    amps = amps2;
+    var avs2 = {};
+    op_ccz(avs2, avs, c1, c2, n);
+    avs2 = avs;
     commands = commands + " CCZ["
         + c1 + "," + c2 + "," + n + "]";
 }
-function exec_r(n_r) {
-    var nrs = n_r.split(":");
-    var n = parseInt(nrs[0]);
+function exec_r(n_d_r) {
+    var n = get_rot_target(n_d_r);
+    var d = get_rot_direction(n_d_r);
+    var r = get_rot_angle(n_d_r);
     update_max_bit(n);
-    var r = parseFloat(nrs[1]);
-    var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (is_1(state, n)) {
-            m_add(amps2, state, mult(a, rot));
-        } else {
-            m_add(amps2, state, a);
-        }
-    }
-    amps = amps2;
-    commands = commands + " R["
+    var avs2 = {};
+    op_r(avs2, avs, n, d, r);
+    avs = avs2;
+    commands = commands + " R" + d + "["
         + n + "," + r + " *pi" + "]";
 }
-function exec_cr(c, n_r) {
+function exec_cr(c, n_d_r) {
     update_max_bit(c);
-    var nrs = n_r.split(":");
-    var n = parseInt(nrs[0]);
+    var n = get_rot_target(n_d_r);
+    var d = get_rot_direction(n_d_r);
+    var r = get_rot_angle(n_d_r);
     update_max_bit(n);
-    var r = parseFloat(nrs[1]);
-    var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, state, mult(a, rot));
-        } else {
-            m_add(amps2, state, a);
-        }
-    }
-    amps = amps2;
-    commands = commands + " CR["
+    var avs2 = {};
+    op_cr(avs2, avs, c, n, d, r);
+    avs = avs2;
+    commands = commands + " CR" + d + "["
         + c + "," + n + "," + r + " *pi" + "]";
 }
 function exec_ccr(c1, c2, n_r) {
     update_max_bit(c1);
     update_max_bit(c2);
-    var nrs =n_r.split(":");
-    var n = parseInt(nrs[0]);
+    var n = get_rot_target(n_d_r);
+    var d = get_rot_direction(n_d_r);
+    var r = get_rot_angle(n_d_r);
     update_max_bit(n);
-    var r = parseFloat(nrs[1]);
-    var rot = [Math.cos(r * Math.PI), Math.sin(r * Math.PI)];
-    var amps2 = {};
-    for(state in amps) {
-        var a = amps[state];
-        if (!is_1(state, c1)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (!is_1(state, c2)) {
-            m_add(amps2, state, a);
-            continue;
-        }
-        if (is_1(state, n)) {
-            m_add(amps2, state, mult(a, rot));
-        } else {
-            m_add(amps2, state, a);
-        }
-    }
-    amps = amps2;
-    commands = commands + " CCR["
+    var avs2 = {};
+    op_ccr(avs2, avs, c1, c2, n, d, r);
+    avs = avs2;
+    commands = commands + " CCR" + d + "["
         + c1 + "," + c2 + "," + n + "," + r + " *pi" + "]";
 }
 function probability(a) {
@@ -566,23 +710,23 @@ function exec_m(n) {
     update_max_bit(n);
     var p0 = 0.0;
     var p1 = 0.0;
-    for (state in amps) {
+    for (state in avs) {
         if (is_1(state, n)) {
-            p1 = p1 + probability(amps[state]);
+            p1 = p1 + probability(avs[state]);
         } else {
-            p0 = p0 + probability(amps[state]);
+            p0 = p0 + probability(avs[state]);
         }
     }
     var b = (p1 > Math.random()) ? true : false;
     var ip = 1.0 / Math.sqrt(b ? p1 : p0);
-    var amps2 = {};
-    for (state in amps) {
-        var a = amps[state];
+    var avs2 = {};
+    for (state in avs) {
+        var a = avs[state];
         if (is_1(state, n) == b) {
-            m_add(amps2, state, [a[0] * ip, a[1] * ip]);
+            m_add(avs2, state, [a[0] * ip, a[1] * ip]);
         }
     }
-    amps = amps2;
+    avs = avs2;
     commands = commands + " M["
         + n + "]";
 }
@@ -596,19 +740,19 @@ function exec_cmd_cc(a0, a1) {
     }
     switch(c2) {
     case "H":
-        exec_cch(a0, a1, parseInt(a2));
+        exec_cch(parseInt(a0), parseInt(a1), parseInt(a2));
         break;
     case "X":
-        exec_ccx(a0, a1, parseInt(a2));
+        exec_ccx(parseInt(a0), parseInt(a1), parseInt(a2));
         break;
     case "Y":
-        exec_ccy(a0, a1, parseInt(a2));
+        exec_ccy(parseInt(a0), parseInt(a1), parseInt(a2));
         break;
     case "Z":
-        exec_ccz(a0, a1, parseInt(a2));
+        exec_ccz(parseInt(a0), parseInt(a1), parseInt(a2));
         break;
     case "R":
-        exec_ccr(a0, a1, a2);
+        exec_ccr(parseInt(a0), parseInt(a1), a2);
         break;
     }
 }
@@ -622,22 +766,22 @@ function exec_cmd_c(a0) {
     }
     switch(c1) {
     case "C":
-        exec_cmd_cc(a0, parseInt(a1));
+        exec_cmd_cc(parseInt(a0), parseInt(a1));
         break;
     case "H":
-        exec_ch(a0, parseInt(a1));
+        exec_ch(parseInt(a0), parseInt(a1));
         break;
     case "X":
-        exec_cx(a0, parseInt(a1));
+        exec_cx(parseInt(a0), parseInt(a1));
         break;
     case "Y":
-        exec_cy(a0, parseInt(a1));
+        exec_cy(parseInt(a0), parseInt(a1));
         break;
     case "Z":
-        exec_cz(a0, parseInt(a1));
+        exec_cz(parseInt(a0), parseInt(a1));
         break;
     case "R":
-        exec_cr(a0, a1);
+        exec_cr(parseInt(a0), a1);
         break;
     }
 }
@@ -678,8 +822,6 @@ function key_in(c) {
     switch(c) {
     case "C":
     case "H":
-    case "X":
-    case "Y":
     case "R":
         var c0 = get_cmd();
         if (c0 === "" || c0 === "C") {
@@ -690,6 +832,8 @@ function key_in(c) {
             set_cmd(c);
         }
         break;
+    case "X":
+    case "Y":
     case "Z":
         var c0 = get_cmd();
         if (c0 === "" || c0 === "C") {
@@ -697,7 +841,7 @@ function key_in(c) {
         } else if (c0 === "R") {
             var a = get_arg();
             if (a) {
-                set_arg(":");
+                reset_arg(set_rot_direction(a, c));
             }
         } else {
             exec_cmd();
@@ -729,7 +873,7 @@ function key_in(c) {
     case "7":
     case "8":
     case "9":
-        set_arg(c);
+        extend_arg(c);
         break;
     case ".":
         set_arg_dot();
